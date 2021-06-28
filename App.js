@@ -1,112 +1,125 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- * @flow strict-local
- */
-
+import 'react-native-gesture-handler';
 import React from 'react';
-import type {Node} from 'react';
 import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
   StyleSheet,
-  Text,
-  useColorScheme,
   View,
+  StatusBar,
+  TouchableOpacity,
 } from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import HomeScreen from './src/screens/HomeScreen';
+import FavoriteScreen from './src/screens/FavoriteScreen';
+import ShopScreen from './src/screens/ShopScreen';
+import LinearGradient from 'react-native-linear-gradient';
+import AppIcon, { Icons } from './src/components/AppIcon';
+import Colors from "./src/constants/Colors";
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
-
-const Section = ({children, title}): Node => {
-  const isDarkMode = useColorScheme() === 'dark';
+const BottomTab = ({ type, color, size = 24, isFocused, index }) => {
+  const icon = index == 0 ? 'home' : 'heart';
+  const gradient = index == 1;
   return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
+    <View>
+      {gradient ? (
+        <LinearGradient
+          colors={[Colors.light, Colors.dark]}
+          start={{x: isFocused ? 0 : 1, y: 0}}
+          end={{x: isFocused ? 1 : 0, y: 0}}
+          style={styles.middleIcon}>
+          <AppIcon name={'plus'} type={type} size={size} color={'white'} />
+        </LinearGradient>
+      ) : (
+        <View style={styles.icon}>
+          <AppIcon name={icon} type={type} size={size} color={color} />
+        </View>
+      )}
     </View>
   );
-};
+}
 
-const App: () => Node = () => {
-  const isDarkMode = useColorScheme() === 'dark';
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
-
+const App = () => {
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.js</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
+    <NavigationContainer>
+      <TabNavigator />
+    </NavigationContainer>
+  )
 };
+
+const Tab = createBottomTabNavigator();
+
+const TabNavigator = () => {
+  return (
+    <Tab.Navigator
+      tabBar={(props) => <MyTabBar {...props} />}>
+      <Tab.Screen name="home" component={HomeScreen} />
+      <Tab.Screen name="Shop" component={ShopScreen} />
+      <Tab.Screen name="Favorite" component={FavoriteScreen} />
+    </Tab.Navigator>
+  )
+}
+
+const MyTabBar = ({ state, descriptors, navigation }) => {
+  return (
+    <View
+      style={styles.bottomBar}>
+      {state.routes.map((route, index) => {
+        const isFocused = state.index === index;
+        const { options } = descriptors[route.key];
+
+        const onPress = () => {
+          const event = navigation.emit({
+            type: 'tabPress',
+            target: route.key,
+          })
+          if (!isFocused && !event.defaultPrevented) {
+            navigation.navigate(route.name);
+          }
+        }
+
+        const color = isFocused ? Colors.dark : Colors.gray;
+
+        return (
+          <TouchableOpacity
+            key={index}
+            onPress={onPress}
+            testID={options.tabBarTestID}
+            accessibilityRole="button"
+          >
+            <BottomTab
+              type={index !== 1 ? Icons.MaterialCommunityIcons : Icons.FontAwesome5}
+              index={index}
+              isFocused={isFocused}
+              size={24}
+              color={color}
+            />
+          </TouchableOpacity>
+        )
+      })}
+    </View>
+  )
+}
 
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
+  bottomBar: {
+    height: 60,
+    backgroundColor: 'white',
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-around',
   },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
+  middleIcon: {
+    bottom: 18,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: 'red',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: 'black',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 0.6,
+    elevation: 8,
+  }
 });
 
 export default App;
